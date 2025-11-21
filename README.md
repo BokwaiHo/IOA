@@ -1,170 +1,261 @@
-<h1>
-  <img src="logo.png" alt="IOA" width="32" height="32">
-  Pedagogically-Inspired Data Synthesis for LLM Knowledge Distillation
-</h1>
+# IOA: Pedagogically-Inspired Data Synthesis for Language Model Knowledge Distillation
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch 2.0+](https://img.shields.io/badge/pytorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This is a streamlined implementation of the IOA (Identifier-Organizer-Adapter) framework from the paper "Pedagogically-Inspired Data Synthesis for Language Model Knowledge Distillation".
+This repository contains the implementation of the **IOA (Identifier-Organizer-Adapter)** framework for knowledge distillation from Large Language Models (LLMs) to smaller models, as described in the paper *"Pedagogically-Inspired Data Synthesis for Language Model Knowledge Distillation"*.
 
-## Overview
+## 📋 Overview
 
-The IOA framework implements a three-stage pedagogical approach to knowledge distillation:
+IOA is a three-stage pedagogically-inspired framework that systematically transfers knowledge from teacher LLMs to student models through:
 
-1. **Identifier**: Diagnoses knowledge deficiencies in student models and identifies critical gaps
-2. **Organizer**: Creates progressive curricula with mastery-based learning sequences
-3. **Adapter**: Adapts knowledge representation to match student model cognitive capacity
+1. **Identifier** - Diagnoses knowledge deficiencies and builds dependency graphs
+2. **Organizer** - Constructs progressive curricula with mastery-based learning
+3. **Adapter** - Adapts knowledge representations to student's cognitive capacity
 
-## Key Features
+The framework draws from educational principles including **Bloom's Mastery Learning** and **Vygotsky's Zone of Proximal Development (ZPD)**.
 
-- **Knowledge-aware synthesis**: Targets specific deficiencies rather than general data augmentation
-- **Curriculum organization**: Structures learning with prerequisite dependencies and mastery gates
-- **Cognitive adaptation**: Five adaptation strategies (concretization, decomposition, cognitive load management, format optimization, linguistic simplification)
-- **Modular design**: Easy to customize and extend for different domains
+## 🌟 Key Features
 
-## Installation
+- **Knowledge-aware targeting**: Identifies specific knowledge gaps rather than treating capabilities as monolithic
+- **Progressive curriculum**: Organizes learning with controlled difficulty increments
+- **Cognitive alignment**: Adapts representations through five strategies:
+  - Abstract Concept Concretization
+  - Complex Reasoning Decomposition
+  - Cognitive Load Management
+  - Representation Format Optimization
+  - Linguistic Complexity Reduction
+- **Mastery-based progression**: Students must achieve τ_mastery (90%) before advancing
+
+## 📊 Results
+
+IOA achieves significant improvements over baseline distillation methods:
+
+| Benchmark | Metric | Improvement |
+|-----------|--------|-------------|
+| DollyEval | ROUGE-L | 94.7% teacher retention |
+| MATH | Pass@1 | +19.2% vs baselines |
+| HumanEval | Pass@1 | +22.3% vs baselines |
+
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
+cd ioa-distillation
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+.\venv\Scripts\activate  # Windows
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Quick Start
+### Basic Usage
 
-### Method 1: Using Main Script
-
-1. **Set up your OpenAI API key**:
 ```bash
-export OPENAI_API_KEY="your-api-key-here"
+# Run with default settings
+python main.py --domain math_problem_solving --student Qwen/Qwen2.5-3B
+
+# With custom configuration
+python main.py --config config.yaml
+
+# Specify teacher model
+python main.py --domain code_generation \
+    --student Qwen/Qwen2.5-3B \
+    --teacher deepseek-ai/DeepSeek-R1
 ```
 
-2. **Run different modes**:
-```bash
-# Run tests
-python main.py test
-
-# Run demo with mock data (no API required)
-python main.py demo
-
-# Run full experiment with real API calls
-python main.py full
-```
-
-### Method 2: Direct Usage
+### Python API
 
 ```python
-from ioa_framework import IOAFramework
-from ioa_config import DatasetBuilder, IOAConfig
+from config.config import get_default_config
+from main import IOAPipeline
 
-# Initialize framework
-framework = IOAFramework(openai_api_key="your-key")
+# Initialize configuration
+config = get_default_config()
+config.model.student_model_name = "Qwen/Qwen2.5-3B"
+config.model.teacher_model_name = "deepseek-ai/DeepSeek-R1"
 
-# Create seed data
-builder = DatasetBuilder()
-seed_data = builder.create_math_seed_data()
-probe_tasks = builder.create_probe_tasks("mathematics")
+# Create and run pipeline
+pipeline = IOAPipeline(config, output_dir="./outputs")
+results = pipeline.run(domain="math_problem_solving")
 
-# Run distillation
-results = framework.distill_knowledge(
-    teacher_model_name="o1-preview",
-    student_model=student_model,
-    target_domain="mathematics", 
-    seed_data=seed_data,
-    probe_tasks=probe_tasks
+print(f"Final evaluation: {results['evaluation_results']}")
+```
+
+## 📁 Project Structure
+
+```
+ioa_distillation/
+├── config/
+│   ├── __init__.py
+│   └── config.py              # All hyperparameters (τ_gap, τ_ZPD, τ_mastery, etc.)
+├── data/
+│   ├── __init__.py
+│   ├── data_utils.py          # Data processing utilities
+│   └── seed_data.py           # Seed dataset management
+├── modules/
+│   ├── __init__.py
+│   ├── identifier.py          # Knowledge Identifier (Eq. 2-6)
+│   ├── organizer.py           # Knowledge Organizer (Eq. 7-9)
+│   └── adapter.py             # Knowledge Adapter (5 strategies)
+├── synthesis/
+│   ├── __init__.py
+│   ├── prompts.py             # System/User prompt templates
+│   └── synthesizer.py         # Data synthesis coordinator
+├── training/
+│   ├── __init__.py
+│   └── trainer.py             # Stage-wise trainer with mastery loops
+├── evaluation/
+│   ├── __init__.py
+│   └── evaluator.py           # ROUGE-L, Pass@k evaluation
+├── utils/
+│   ├── __init__.py
+│   ├── llm_client.py          # LLM API client
+│   └── graph_utils.py         # Dependency graph utilities
+├── main.py                    # Main entry point (Algorithm 1)
+├── requirements.txt           # Dependencies
+└── README.md                  # This file
+```
+
+## ⚙️ Configuration
+
+### Key Hyperparameters
+
+| Parameter | Default | Description | Reference |
+|-----------|---------|-------------|-----------|
+| `τ_gap` | 0.3 | Deficiency threshold | Eq. 2 |
+| `τ_high` | 0.9 | High mastery threshold | Eq. 3 |
+| `τ_low` | 0.7 | Low mastery threshold | Eq. 3 |
+| `τ_dep` | 0.3 | Dependency inclusion threshold | Eq. 3 |
+| `α` | 0.7 | Severity score weight | Eq. 4 |
+| `τ_ZPD` | 0.15 | Zone of Proximal Development | Eq. 8 |
+| `τ_mastery` | 0.9 | Mastery requirement | Eq. 9 |
+| `J_i` | 10 | Samples per seed | Eq. 1 |
+
+### Configuration File Example
+
+```yaml
+identifier:
+  tau_gap: 0.3
+  tau_high: 0.9
+  tau_low: 0.7
+  alpha: 0.7
+
+organizer:
+  tau_zpd: 0.15
+  tau_mastery: 0.9
+
+adapter:
+  num_samples_per_seed: 10
+  enable_verification: true
+
+model:
+  student_model_name: "Qwen/Qwen2.5-3B"
+  teacher_model_name: "deepseek-ai/DeepSeek-R1"
+
+training:
+  learning_rate_full: 2e-5
+  global_batch_size: 128
+  max_epochs: 3
+```
+
+## 📚 Supported Models
+
+### Teacher Models
+- OpenAI o1
+- DeepSeek-R1
+- GPT-4
+- Any API-accessible LLM
+
+### Student Models
+- Qwen2.5 family (3B, 7B, 14B)
+- LLaMA 3.1/3.2 family (3B, 8B)
+- Any HuggingFace causal LM
+
+## 📈 Evaluation Benchmarks
+
+| Category | Benchmarks | Metric |
+|----------|------------|--------|
+| Instruction Following | DollyEval, VicunaEval | ROUGE-L |
+| Math Reasoning | GSM8K, MATH, AIME2024 | Pass@1 |
+| Code Generation | HumanEval, MBPP, LiveCodeBench | Pass@1 |
+| Academic QA | GPQA-Diamond | Accuracy |
+
+## 📦 Seed Data Preparation
+
+Prepare seed data in `./data/seed/` directory with the following structure:
+
+```
+data/seed/
+├── instruction_following/
+│   └── data.jsonl
+├── math_problem_solving/
+│   └── data.jsonl
+├── code_generation/
+│   └── data.jsonl
+└── academic_knowledge_reasoning/
+    └── data.jsonl
+```
+
+Each JSONL file should contain entries like:
+
+```json
+{"input": "Solve for x: 2x + 5 = 13", "output": "x = 4", "domain": "math_problem_solving", "module": "algebra/linear"}
+```
+
+Recommended seed data sizes (per Appendix B):
+- Instruction Following: ~800 items
+- Math Problem Solving: ~900 items
+- Code Generation: ~700 items
+- Academic Knowledge Reasoning: ~600 items
+
+## 🔧 Advanced Usage
+
+### Using LoRA for Larger Models
+
+```python
+config = get_default_config()
+config.model.use_lora = True
+config.training.lora_r = 16
+config.training.lora_alpha = 32
+```
+
+### Custom Teacher API
+
+```python
+from utils.llm_client import LLMClient
+
+client = LLMClient(
+    api_base="https://your-api-endpoint.com",
+    api_key="your-api-key",
+    model_name="your-model"
 )
 ```
 
-## File Structure
+### Running Specific Phases
 
-- `ioa_framework.py`: Core IOA implementation (Identifier, Organizer, Adapter)
-- `ioa_config.py`: Configuration, data utilities, and prompt templates
-- `ioa_training.py`: Training utilities and complete usage example
-- `ioa_utils.py`: Utility functions, logging, experiment tracking, and validation tools
-- `ioa_tests.py`: Comprehensive test suite with unit and integration tests
-- `main.py`: Main execution script with multiple modes (test/demo/full)
-- `requirements.txt`: Python dependencies
-- `config.yaml`: Configuration file (auto-generated)
-- `data/`: Directory for seed data and probe tasks
-
-## Configuration
-
-Edit `config.yaml` to customize framework parameters:
-
-```yaml
-# Identifier parameters
-tau_gap: 0.3        # Deficiency threshold
-tau_mastery: 0.9    # Mastery requirement
-
-# Organizer parameters  
-tau_zpd: 0.15       # Zone of proximal development
-
-# Training parameters
-num_examples_per_stage: 10
-learning_rate: 2e-5
-batch_size: 8
-```
-
-## Supported Domains
-
-Currently implemented:
-- **Mathematics**: Arithmetic, algebra, calculus
-- **Programming**: Python basics, algorithms, string processing
-
-Easy to extend for new domains by:
-1. Adding knowledge modules in `IOAIdentifier.decompose_knowledge()`
-2. Creating seed data with `DatasetBuilder`
-3. Defining probe tasks for evaluation
-
-## Adaptation Strategies
-
-The framework implements five pedagogical adaptation techniques:
-
-1. **Abstract Concept Concretization**: Use concrete analogies before formal concepts
-2. **Complex Reasoning Decomposition**: Break down into explicit step-by-step reasoning
-3. **Cognitive Load Management**: Control difficulty increments and problem complexity
-4. **Representation Format Optimization**: Consistent templates and structured formats
-5. **Linguistic Complexity Reduction**: Simplified language and clear connectors
-
-## Evaluation
-
-Built-in evaluation metrics:
-- ROUGE-L for instruction following tasks
-- Pass@K for reasoning tasks
-- Custom domain-specific correctness checks
-
-## Limitations and Notes
-
-- **API Dependency**: Requires OpenAI API access for teacher model queries
-- **Simplified Implementation**: This is a research prototype focused on core concepts
-- **Mock Components**: Some evaluation functions use simplified heuristics
-- **Resource Requirements**: Fine-tuning requires GPU resources for larger models
-
-## Customization
-
-### Adding New Domains
-
-1. Extend `IOAIdentifier.decompose_knowledge()`:
 ```python
-elif domain == "physics":
-    return [
-        KnowledgeModule("mechanics", "Classical Mechanics", "foundation", [], 1),
-        KnowledgeModule("thermodynamics", "Thermodynamics", "advanced", ["mechanics"], 2),
-    ]
+pipeline = IOAPipeline(config)
+pipeline.setup()
+
+# Run only identification
+pipeline.run_identification(domain="math_problem_solving")
+
+# Run only organization
+pipeline.run_organization(domain="math_problem_solving")
+
+# Run only synthesis
+pipeline.run_adaptation_and_synthesis()
 ```
 
-2. Create domain-specific seed data and probe tasks using `DatasetBuilder`
+## 🙏 Acknowledgments
 
-### Custom Adaptation Strategies
-
-Modify `IOAAdapter.adapt_knowledge_representation()` to implement domain-specific adaptations or extend the five core strategies.
-
-### Integration with Different Models
-
-The framework is designed to work with any HuggingFace compatible model. Simply change the model name in the configuration or training scripts.
-
-
-## License
-
-This implementation is for research purposes. Please ensure compliance with the original paper's licensing terms and the APIs/models you use.
-
-## Support
-
-This is a research implementation. For questions about the methodology, please refer to the original paper. For implementation issues, check that all dependencies are installed and API keys are configured correctly.
+- This work draws inspiration from Bloom's Mastery Learning and Vygotsky's Zone of Proximal Development
+- Thanks to the teams behind LLaMA, Qwen, DeepSeek, and other open-source LLMs
+- Built with PyTorch, HuggingFace Transformers, and PEFT
